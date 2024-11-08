@@ -1,0 +1,10 @@
+.vs/
+bin/
+bin-int/
+
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.sln
+
+!Vendor/premake5
