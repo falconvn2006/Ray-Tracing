@@ -1,4 +1,4 @@
-project "App"
+project "FrameRayTracingApp"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
