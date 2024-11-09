@@ -2,8 +2,9 @@
 #include "Entrypoint.h"
 
 #include "Image.h"
-#include "Random.h"
 #include "Timer.h"
+
+#include "Renderer.h"
 
 using namespace Frame;
 
@@ -24,8 +25,10 @@ public:
 		m_ViewPortWidth = ImGui::GetContentRegionAvail().x;
 		m_ViewPortHeight = ImGui::GetContentRegionAvail().y;
 
-		if(m_Image)
-			ImGui::Image((unsigned long long)m_Image->GetDescriptorSet(), { (float)m_Image->GetWidth(), (float)m_Image->GetHeight() });
+		auto image = m_Renderer.GetFinalImage();
+
+		if(image)
+			ImGui::Image((unsigned long long)image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -37,27 +40,16 @@ public:
 	{
 		Timer timer;
 
-		if (!m_Image || m_ViewPortWidth != m_Image->GetWidth() || m_ViewPortHeight != m_Image->GetHeight())
-		{
-			m_Image = std::make_shared<Image>(m_ViewPortWidth, m_ViewPortHeight, ImageFormat::RGBA);
-			delete[] m_ImageData;
+		// Call renderer resize
+		m_Renderer.OnResize(m_ViewPortWidth, m_ViewPortHeight);
+		// Call renderer render
+		m_Renderer.Render();
 
-			m_ImageData = new uint32_t[m_ViewPortWidth * m_ViewPortHeight];
-		}
-
-		for (uint32_t i = 0; i < m_ViewPortWidth * m_ViewPortHeight; i++)
-		{
-			m_ImageData[i] = Random::UInt();
-			m_ImageData[i] |= 0xff000000;
-		}
-
-		m_Image->SetData(m_ImageData);
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 
 private:
-	std::shared_ptr<Image> m_Image;
-	uint32_t* m_ImageData = nullptr;
+	Renderer m_Renderer;
 
 	uint32_t m_ViewPortWidth = 0, m_ViewPortHeight = 0;
 	float m_LastRenderTime = 0.0f;
@@ -66,7 +58,7 @@ private:
 Frame::Application* Frame::CreateApplication(int argc, char** argv)
 {
 	ApplicationSettings settings;
-	settings.Name = "Test";
+	settings.Name = "Frame Ray Tracer";
 	
 
 	Application* application = new Frame::Application(settings);
