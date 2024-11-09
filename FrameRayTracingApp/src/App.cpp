@@ -17,6 +17,13 @@ public:
 		
 		ImGui::Text("Last Render time: %.3fms", m_LastRenderTime);
 
+		ImGui::Text("Edit the color of the Sphere");
+		ImGui::InputInt("R", &m_R);
+		ImGui::InputInt("G", &m_G);
+		ImGui::InputInt("B", &m_B);
+
+		m_Renderer.SetSphereColor(glm::vec3(m_R, m_G, m_B));
+
 		ImGui::End();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -53,6 +60,8 @@ private:
 
 	uint32_t m_ViewPortWidth = 0, m_ViewPortHeight = 0;
 	float m_LastRenderTime = 0.0f;
+
+	int m_R = 1, m_G = 0, m_B = 1;
 };
 
 Frame::Application* Frame::CreateApplication(int argc, char** argv)
