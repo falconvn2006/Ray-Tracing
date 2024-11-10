@@ -15,7 +15,7 @@ Camera::Camera(float verticalFOV, float nearClip, float farClip)
 	m_Position = glm::vec3(0, 0, 3);
 }
 
-void Camera::OnUpdate(float ts)
+bool Camera::OnUpdate(float ts)
 {
 	glm::vec2 mousePos = Frame::Input::GetMousePosition();
 	glm::vec2 delta = (mousePos - m_LastMousePosition) * 0.002f;
@@ -37,7 +37,7 @@ void Camera::OnUpdate(float ts)
 	if (!Frame::Input::IsMouseButtonDown(FRAME_MOUSE_BUTTON_2))
 	{
 		Frame::Input::SetCursorMode(Frame::CursorMode::Normal);
-		return;
+		return false;
 	}
 
 	Frame::Input::SetCursorMode(Frame::CursorMode::Locked);
@@ -101,6 +101,8 @@ void Camera::OnUpdate(float ts)
 		ReCalculateView();
 		ReCalculateRayDirections();
 	}
+
+	return moved;
 }
 
 void Camera::OnResize(uint32_t width, uint32_t height)
