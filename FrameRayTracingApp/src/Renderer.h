@@ -49,6 +49,8 @@ private:
 
 	std::shared_ptr<Frame::Image> m_FinalImage;
 
+	std::vector<uint32_t> m_ImageHorizontalIterator, m_ImageVerticalIterator;
+
 	const Scene* m_ActiveScene = nullptr;
 	const Camera* m_ActiveCamera = nullptr;
 

@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include <execution>
+
 #include "Random.h"
 
 namespace Utils
@@ -37,6 +39,14 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 	delete[] m_AccumulationData;
 	m_AccumulationData = new glm::vec4[width * height];
+
+	m_ImageHorizontalIterator.resize(width);
+	m_ImageVerticalIterator.resize(height);
+
+	for (uint32_t i = 0; i < width; i++)
+		m_ImageHorizontalIterator[i] = i;
+	for (uint32_t i = 0; i < height; i++)
+		m_ImageVerticalIterator[i] = i;
 }
 
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
@@ -116,6 +126,26 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 	// Calculate aspect ratio
 	/*float aspectRatio = m_FinalImage->GetWidth() / (float)m_FinalImage->GetHeight();*/
 
+#define MT
+#ifdef MT
+	std::for_each(std::execution::par, m_ImageVerticalIterator.begin(), m_ImageVerticalIterator.end(),
+		[this](uint32_t y)
+		{
+			std::for_each(std::execution::par, m_ImageHorizontalIterator.begin(), m_ImageHorizontalIterator.end(),
+				[this, y](uint32_t x)
+				{
+					glm::vec4 color = PerPixel(x, y);
+					m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color;
+
+					glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
+					accumulatedColor /= (float)m_FrameIndex;
+
+
+					accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+					m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRBGA(accumulatedColor);
+				});
+		});
+#else
 	for(uint32_t y = 0;  y < m_FinalImage->GetHeight(); y++)
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
@@ -129,6 +159,7 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 			accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
 			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRBGA(accumulatedColor);
 		}
+#endif
 
 	m_FinalImage->SetData(m_ImageData);
 
