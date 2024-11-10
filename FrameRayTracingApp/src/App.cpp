@@ -5,24 +5,52 @@
 #include "Timer.h"
 
 #include "Renderer.h"
+#include "Camera.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace Frame;
 
 class ExampleLayer : public Frame::Layer
 {
 public:
+	ExampleLayer()
+		: m_Camera(45.0f, 0.1f, 100.0f)
+	{
+		m_Scene.Spheres.push_back(Sphere{ {0.0f, 0.0f, 0.0f}, 0.5f, {1.0f, 1.0f, 1.0f} });
+		m_Scene.Spheres.push_back(Sphere{ {1.0f, 0.0f, -5.0f}, 1.5f, {.2f, .3f, 1.0f} });;
+	}
+
+	virtual void OnUpdate(float ts) override
+	{
+		m_Camera.OnUpdate(ts);
+	}
+
 	virtual void OnImGUIRender() override
 	{
 		ImGui::Begin("Settings");
-		
+
 		ImGui::Text("Last Render time: %.3fms", m_LastRenderTime);
 
-		ImGui::Text("Edit the color of the Sphere");
-		ImGui::InputInt("R", &m_R);
-		ImGui::InputInt("G", &m_G);
-		ImGui::InputInt("B", &m_B);
+		ImGui::End();
 
-		m_Renderer.SetSphereColor(glm::vec3(m_R, m_G, m_B));
+		ImGui::Begin("Scene");
+
+		for (int i = 0; i < m_Scene.Spheres.size(); i++)
+		{
+			ImGui::PushID(i);
+
+			ImGui::Text("Sphere %d properties:", i);
+
+			Sphere* sphere = &m_Scene.Spheres[i];
+			ImGui::DragFloat3("Position", glm::value_ptr(sphere->Position), 0.1f);
+			ImGui::DragFloat("Radius", &sphere->Radius, 0.1f);
+			ImGui::ColorEdit3("Albedo", glm::value_ptr(sphere->Albedo));
+
+			ImGui::Separator();
+
+			ImGui::PopID();
+		}
 
 		ImGui::End();
 
@@ -34,7 +62,7 @@ public:
 
 		auto image = m_Renderer.GetFinalImage();
 
-		if(image)
+		if (image)
 			ImGui::Image((unsigned long long)image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
 		ImGui::End();
@@ -47,21 +75,20 @@ public:
 	{
 		Timer timer;
 
-		// Call renderer resize
 		m_Renderer.OnResize(m_ViewPortWidth, m_ViewPortHeight);
-		// Call renderer render
-		m_Renderer.Render();
+		m_Camera.OnResize(m_ViewPortWidth, m_ViewPortHeight);
+		m_Renderer.Render(m_Scene, m_Camera);
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 
 private:
 	Renderer m_Renderer;
+	Camera m_Camera;
+	Scene m_Scene;
 
 	uint32_t m_ViewPortWidth = 0, m_ViewPortHeight = 0;
 	float m_LastRenderTime = 0.0f;
-
-	int m_R = 1, m_G = 0, m_B = 1;
 };
 
 Frame::Application* Frame::CreateApplication(int argc, char** argv)
