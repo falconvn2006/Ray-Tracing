@@ -49,6 +49,7 @@ public:
 		ImGui::Text("Last Render time: %.3fms", m_LastRenderTime);
 
 		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+		ImGui::Checkbox("Fast Accumulate", &m_Renderer.GetSettings().FastAccumulate);
 
 		if (ImGui::Button("Reset"))
 			m_Renderer.ResetFrameIndex();
@@ -100,7 +101,7 @@ public:
 		m_ViewPortHeight = ImGui::GetContentRegionAvail().y;
 
 		auto image = m_Renderer.GetFinalImage();
-
+		
 		if (image)
 			ImGui::Image((unsigned long long)image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
