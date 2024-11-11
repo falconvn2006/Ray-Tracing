@@ -18,15 +18,22 @@ public:
 		: m_Camera(45.0f, 0.1f, 100.0f)
 	{
 		Material& whiteSphere = m_Scene.Materials.emplace_back();
-		whiteSphere.Albedo = glm::vec3(1, 1, 1);
+		whiteSphere.Albedo = glm::vec3(0, 1, 0);
 		whiteSphere.Roughness = 0.0f;
 
 		Material& blueSphere = m_Scene.Materials.emplace_back();
 		blueSphere.Albedo = glm::vec3(0.2f, 0.3f, 1.0f);
 		blueSphere.Roughness = 0.1f;
 
+		Material& orangeSphere = m_Scene.Materials.emplace_back();
+		orangeSphere.Albedo = { 0.8f, 0.5f, 0.2f };
+		orangeSphere.Roughness = 0.1f;
+		orangeSphere.EmissionColor = orangeSphere.Albedo;
+		orangeSphere.EmissionPower = 2.0f;
+
 		m_Scene.Spheres.push_back(Sphere{ {0.0f, 0.0f, 0.0f}, 1.0f, 0});
 		m_Scene.Spheres.push_back(Sphere{ {0.0f, -101.0f, 0.0f}, 100.0f, 1 });;
+		m_Scene.Spheres.push_back(Sphere{ {2.0f, 0.0f, 0.0f}, 1.0f, 2 });
 	}
 
 	virtual void OnUpdate(float ts) override
@@ -76,6 +83,8 @@ public:
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(m_Scene.Materials[i].Albedo));
 			ImGui::DragFloat("Roughness", &m_Scene.Materials[i].Roughness, 0.05f, 0.0f, 1.0f);
 			ImGui::DragFloat("Metallic", &m_Scene.Materials[i].Metallic, 0.05f, 0.0f, 1.0f);
+			ImGui::ColorEdit3("Emission Color", glm::value_ptr(m_Scene.Materials[i].EmissionColor));
+			ImGui::DragFloat("Emission Power", &m_Scene.Materials[i].EmissionPower, 0.05f, 0.0f, FLT_MAX);
 
 			ImGui::Separator();
 
