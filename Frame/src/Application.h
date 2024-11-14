@@ -48,6 +48,8 @@ namespace Frame
 
 		void PushLayer(const std::shared_ptr<Layer>& layer) { m_LayerStack.emplace_back(layer); layer->OnAttach(); }
 
+		std::vector<std::shared_ptr<Layer>>& GetLayerStack() { return m_LayerStack; }
+
 		void Close();
 		
 		float GetTime();

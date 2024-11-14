@@ -11,6 +11,7 @@ struct Material
 	float Metallic = 0.0f;
 	glm::vec3 EmissionColor{ 0.0f };
 	float EmissionPower = 0.0f;
+	float RefractionIndex = 0;
 
 	glm::vec3 GetEmission() const { return EmissionColor * EmissionPower; }
 };

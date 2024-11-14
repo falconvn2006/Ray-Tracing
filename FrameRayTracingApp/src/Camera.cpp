@@ -22,19 +22,11 @@ bool Camera::OnUpdate(float ts)
 	m_LastMousePosition = mousePos;
 
 	// The second way of moving the camera
-	//if (Frame::Input::IsKeyDown(FRAME_KEY_P))
-	//	if (m_IsToggle)
-	//		m_IsToggle = false;
-	//	else
-	//		m_IsToggle = true;
 
-	//if (!m_IsToggle)
-	//{
-	//	Frame::Input::SetCursorMode(Frame::CursorMode::Normal);
-	//	return;
-	//}
+	if (Frame::Input::IsKeyDown(FRAME_KEY_P))
+		m_IsToggle = !m_IsToggle;
 
-	if (!Frame::Input::IsMouseButtonDown(FRAME_MOUSE_BUTTON_2))
+	if (!Frame::Input::IsMouseButtonDown(FRAME_MOUSE_BUTTON_2) && !m_IsToggle)
 	{
 		Frame::Input::SetCursorMode(Frame::CursorMode::Normal);
 		return false;

@@ -36,6 +36,14 @@ namespace Utils
 	{
 		return glm::normalize(glm::vec3(RandomFloat(seed) * 2.0f - 1.0f, RandomFloat(seed) * 2.0f - 1.0f, RandomFloat(seed) * 2.0f - 1.0f));
 	}
+
+	static float Reflectance(float cosine, float refractionIndex)
+	{
+		// Schlick's approximation for reflectance;
+		float r0 = (1 - refractionIndex) / (1 + refractionIndex);
+		r0 = r0 * r0;
+		return r0 + (1 - r0) * std::pow((1 - cosine), 5);
+	}
 }
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
@@ -81,7 +89,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	uint32_t seed = x + y * m_FinalImage->GetWidth();
 	seed *= m_FrameIndex;
 
-	int bounces = 5;
+	int bounces = 10;
 	for (int i = 0; i < bounces; i++)
 	{
 		seed += i;
@@ -97,16 +105,50 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 		const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
 		const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
 
-		throughput *= material.Albedo;
+		// TODO: The dielectric material still has a problem is that there are still random pixels in side
+		// making it looks pretty weird
+		Ray scattered;
+		glm::vec3 attenuation(1, 1, 1);
+		if (material.RefractionIndex > 0.0f)
+		{
+			attenuation = glm::vec3(1, 1, 1);
+			float ri = payload.FrontFace ? (1.0f / material.RefractionIndex) : material.RefractionIndex;
+
+			glm::vec3 unit_direction = glm::normalize(ray.Direction);
+			float cos_theta = std::fmin(dot(-unit_direction, payload.WorldNormal), 1.0);
+			float sin_theta = glm::sqrt(1.0 - cos_theta * cos_theta);
+
+			bool cannot_refract = ri * sin_theta > 1.0;
+			glm::vec3 direction;
+
+			if (cannot_refract || Utils::Reflectance(cos_theta, ri) > Frame::Random::Float())
+				direction = glm::reflect(unit_direction, payload.WorldNormal);
+			else
+				direction = glm::refract(unit_direction, payload.WorldNormal, ri);
+
+			scattered.Origin = payload.WorldPosition;
+			scattered.Direction = direction;
+
+			ray = scattered; //
+			continue; //
+		}
+		else
+			attenuation = material.Albedo;
+
+		throughput *= attenuation;
 		light += material.GetEmission();
 
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 		if (!m_Settings.FastAccumulate)
+		{
 			/*ray.Direction = glm::normalize(payload.WorldNormal + material.Roughness * Frame::Random::Vec3(-0.5f, 0.5f));*/
-			ray.Direction = glm::normalize(payload.WorldNormal + Frame::Random::InUnitSphere());
+			ray.Direction = glm::normalize(payload.WorldNormal + material.Metallic * material.Roughness * Frame::Random::InUnitSphere());
+		}
 		else
+		{
 			/*ray.Direction = glm::normalize(payload.WorldNormal + material.Roughness * Frame::Random::Vec3(-0.5f, 0.5f));*/
-			ray.Direction = glm::normalize(payload.WorldNormal + Utils::InUnitSphere(seed));
+			ray.Direction = glm::normalize(payload.WorldNormal + material.Metallic * material.Roughness * Utils::InUnitSphere(seed));
+		}
 	}
 
 	return glm::vec4(light, 1);
@@ -123,6 +165,10 @@ Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int
 	glm::vec3 origin = ray.Origin - closetSphere.Position;
 	payload.WorldPosition = origin + ray.Direction * hitDistance; // Kinda the world space position
 	payload.WorldNormal = glm::normalize(payload.WorldPosition); // Kinda the world space normal
+	
+	/*glm::vec3 outward_normal = ray.Origin - closetSphere.Position / closetSphere.Radius;
+
+	payload.SetFaceNormal(ray, outward_normal);*/
 	payload.WorldPosition += closetSphere.Position;
 
 	return payload;
@@ -191,7 +237,7 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 		m_FrameIndex = 1;
 }
 
-Renderer::HitPayload Renderer::TraceRay( const Ray& ray)
+Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 { 
 	int closetSphere = -1;
 	float hitDistance = std::numeric_limits<float>::max();

@@ -15,15 +15,18 @@ class ExampleLayer : public Frame::Layer
 {
 public:
 	ExampleLayer()
-		: m_Camera(45.0f, 0.1f, 100.0f)
+		: m_Camera(80.0f, 0.1f, 100.0f)
 	{
-		Material& whiteSphere = m_Scene.Materials.emplace_back();
-		whiteSphere.Albedo = glm::vec3(0, 1, 0);
-		whiteSphere.Roughness = 0.0f;
+		Material& greenSphere = m_Scene.Materials.emplace_back();
+		greenSphere.Albedo = glm::vec3(0, 1, 0);
+		greenSphere.Roughness = 1.0f;
+		greenSphere.Metallic = 1.0f;
+		greenSphere.RefractionIndex = 1.00f / 1.33f;
 
-		Material& blueSphere = m_Scene.Materials.emplace_back();
-		blueSphere.Albedo = glm::vec3(0.2f, 0.3f, 1.0f);
-		blueSphere.Roughness = 0.1f;
+		Material& graySphere = m_Scene.Materials.emplace_back();
+		graySphere.Albedo = glm::vec3(0.13f, 0.13f, 0.130f);
+		graySphere.Roughness = 1.0f;
+		graySphere.Metallic = 1.0f;
 
 		Material& orangeSphere = m_Scene.Materials.emplace_back();
 		orangeSphere.Albedo = { 0.8f, 0.5f, 0.2f };
@@ -50,6 +53,7 @@ public:
 
 		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
 		ImGui::Checkbox("Fast Accumulate", &m_Renderer.GetSettings().FastAccumulate);
+		ImGui::Checkbox("Move Mode", &m_Camera.m_IsToggle);
 
 		if (ImGui::Button("Reset"))
 			m_Renderer.ResetFrameIndex();
@@ -86,6 +90,7 @@ public:
 			ImGui::DragFloat("Metallic", &m_Scene.Materials[i].Metallic, 0.05f, 0.0f, 1.0f);
 			ImGui::ColorEdit3("Emission Color", glm::value_ptr(m_Scene.Materials[i].EmissionColor));
 			ImGui::DragFloat("Emission Power", &m_Scene.Materials[i].EmissionPower, 0.05f, 0.0f, FLT_MAX);
+			ImGui::DragFloat("Refraction Index", &m_Scene.Materials[i].RefractionIndex, 0.05f, 0.0f, FLT_MAX);
 
 			ImGui::Separator();
 
@@ -136,7 +141,6 @@ Frame::Application* Frame::CreateApplication(int argc, char** argv)
 	ApplicationSettings settings;
 	settings.Name = "Frame Ray Tracer";
 	
-
 	Application* application = new Frame::Application(settings);
 	application->PushLayer<ExampleLayer>();
 	application->SetMenuBarCallback([application]()

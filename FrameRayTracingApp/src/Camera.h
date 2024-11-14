@@ -8,6 +8,9 @@ class Camera
 public:
 	Camera(float verticalFOV, float nearClip, float farClip);
 
+	// Second way of controlling: Toggle
+	bool m_IsToggle = false;
+
 	bool OnUpdate(float ts);
 	void OnResize(uint32_t width, uint32_t height);
 
@@ -46,8 +49,5 @@ private:
 	glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
 
 	uint32_t m_ViewPortWidth = 0, m_ViewPortHeight = 0;
-
-	// Second way of controlling: Toggle
-	bool m_IsToggle = false;
 };
 
